@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Job Pricing Calculator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-focus: #3b82f6;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Grid layout */
+    .calculator-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding: 3rem 1.5rem;
+      }
+      h1 {
+        font-size: 2.35rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+      }
+      .calculator-layout {
+        grid-template-columns: 1.15fr 0.85fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+      color: var(--text-main);
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-affix {
+      position: absolute;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      user-select: none;
+      font-weight: 500;
+    }
+
+    .input-prefix {
+      left: 0.875rem;
+    }
+
+    .input-suffix {
+      right: 0.875rem;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      height: 46px;
+      padding: 0.625rem 0.875rem;
+      font-size: 1rem;
+      color: var(--text-main);
+      background-color: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .has-prefix input[type="number"] {
+      padding-left: 2rem;
+    }
+
+    .has-suffix input[type="number"] {
+      padding-right: 2.25rem;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+
+    input.input-error {
+      border-color: var(--danger);
+      background-color: var(--danger-light);
+    }
+
+    input.input-error:focus {
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+    }
+
+    .error-msg {
+      display: none;
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+      font-weight: 500;
+    }
+
+    .error-msg.visible {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Actions */
+    .button-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1.25rem;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background-color: #fff;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg);
+      color: var(--text-main);
+    }
+
+    /* General notification / banner */
+    .banner {
+      display: none;
+      padding: 0.875rem 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .banner.visible {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .banner-danger {
+      background-color: var(--danger-light);
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    /* Results section */
+    .results-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      position: sticky;
+      top: 1.5rem;
+    }
+
+    .result-hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .result-hero-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.9;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .result-hero-value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .result-hero-note {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      margin-top: 0.5rem;
+      font-weight: 400;
+      line-height: 1.35;
+    }
+
+    .result-metrics {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .metric-item {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.875rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .metric-value.profit-value {
+      color: var(--success);
+    }
+
+    .explanation-box {
+      margin-top: 1.25rem;
+      padding: 0.875rem;
+      border-radius: var(--radius-sm);
+      background-color: #f1f5f9;
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .explanation-box strong {
+      color: var(--text-main);
+    }
+
+    /* Accessibility focus ring */
+    button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">Small Business Toolkit</span>
+      <h1>Service Job Pricing Calculator</h1>
+      <p class="subtitle">Quickly calculate what to charge customers based on your labor costs, additional job expenses, and desired profit margin.</p>
+    </header>
+
+    <div class="calculator-layout">
+      <!-- Form Input Card -->
+      <section class="card" aria-label="Job Cost Inputs">
+        <h2 class="card-title">
+          <span>Job Details</span>
+        </h2>
+
+        <div id="general-alert" class="banner banner-danger" role="alert" aria-live="assertive">
+          <span>⚠️</span>
+          <span id="general-alert-text">Please review and fix the highlighted fields below.</span>
+        </div>
+
+        <form id="pricing-form" novalidate>
+          <!-- Workers -->
+          <div class="form-group">
+            <label for="workers">Number of Workers</label>
+            <div class="input-wrapper">
+              <input 
+                type="number" 
+                id="workers" 
+                name="workers" 
+                min="1" 
+                step="1" 
+                inputmode="numeric" 
+                placeholder="e.g. 2"
+                required
+              >
+            </div>
+            <span class="field-hint">Total team members performing the work</span>
+            <div id="workers-error" class="error-msg" role="alert"></div>
+          </div>
+
+          <!-- Hours per worker -->
+          <div class="form-group">
+            <label for="hours">Hours per Worker</label>
+            <div class="input-wrapper has-suffix">
+              <input 
+                type="number" 
+                id="hours" 
+                name="hours" 
+                min="0" 
+                step="any" 
+                inputmode="decimal" 
+                placeholder="e.g. 8"
+                required
+              >
+              <span class="input-affix input-suffix">hrs</span>
+            </div>
+            <span class="field-hint">Estimated work duration per person</span>
+            <div id="hours-error" class="error-msg" role="alert"></div>
+          </div>
+
+          <!-- Hourly labor cost -->
+          <div class="form-group">
+            <label for="rate">Hourly Labor Cost per Worker</label>
+            <div class="input-wrapper has-prefix">
+              <span class="input-affix input-prefix">$</span>
+              <input 
+                type="number" 
+                id="rate" 
+                name="rate" 
+                min="0" 
+                step="any" 
+                inputmode="decimal" 
+                placeholder="e.g. 35.00"
+                required
+              >
+            </div>
+            <span class="field-hint">Hourly wage or fully burdened labor rate</span>
+            <div id="rate-error" class="error-msg" role="alert"></div>
+          </div>
+
+          <!-- Other job expenses -->
+          <div class="form-group">
+            <label for="expenses">Other Job Expenses</label>
+            <div class="input-wrapper has-prefix">
+              <span class="input-affix input-prefix">$</span>
+              <input 
+                type="number" 
+                id="expenses" 
+                name="expenses" 
+                min="0" 
+                step="any" 
+                inputmode="decimal" 
+                placeholder="e.g. 150.00"
+                required
+              >
+            </div>
+            <span class="field-hint">Materials, vehicle fuel, permits, or rentals (enter 0 if none)</span>
+            <div id="expenses-error" class="error-msg" role="alert"></div>
+          </div>
+
+          <!-- Profit Margin -->
+          <div class="form-group">
+            <label for="margin">Desired Profit Margin</label>
+            <div class="input-wrapper has-suffix">
+              <input 
+                type="number" 
+                id="margin" 
+                name="margin" 
+                min="0" 
+                max="99.99" 
+                step="any" 
+                inputmode="decimal" 
+                placeholder="e.g. 25"
+                required
+              >
+              <span class="input-affix input-suffix">%</span>
+            </div>
+            <span class="field-hint">Percentage of the final customer price kept as profit (must be under 100%)</span>
+            <div id="margin-error" class="error-msg" role="alert"></div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="button-group">
+            <button type="submit" class="btn-primary" id="calculate-btn">Calculate Price</button>
+            <button type="button" class="btn-secondary" id="reset-btn">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Results Card -->
+      <section class="card results-card" aria-label="Calculation Results">
+        <h2 class="card-title">Quote Breakdown</h2>
+
+        <div class="result-hero">
+          <div class="result-hero-label">Recommended Customer Price</div>
+          <div class="result-hero-value" id="display-price">$0.00</div>
+          <p class="result-hero-note">Note: This quote is an estimate and actual costs may vary.</p>
+        </div>
+
+        <div class="result-metrics">
+          <div class="metric-item">
+            <span class="metric-label">Total Labor Cost</span>
+            <span class="metric-value" id="display-labor">$0.00</span>
+          </div>
+
+          <div class="metric-item">
+            <span class="metric-label">Total Job Cost</span>
+            <span class="metric-value" id="display-total-cost">$0.00</span>
+          </div>
+
+          <div class="metric-item">
+            <span class="metric-label">Estimated Profit</span>
+            <span class="metric-value profit-value" id="display-profit">$0.00</span>
+          </div>
+        </div>
+
+        <div class="explanation-box">
+          <strong>Pricing Formula:</strong> The recommended price is calculated using profit margin on selling price: 
+          <code>Price = Total Cost ÷ (1 - Margin %)</code>. This guarantees your profit margin is a true percentage of your gross revenue rather than a simple markup on costs.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // DOM Elements
+      const form = document.getElementById('pricing-form');
+      const resetBtn = document.getElementById('reset-btn');
+      const generalAlert = document.getElementById('general-alert');
+      const generalAlertText = document.getElementById('general-alert-text');
+
+      const inputs = {
+        workers: document.getElementById('workers'),
+        hours: document.getElementById('hours'),
+        rate: document.getElementById('rate'),
+        expenses: document.getElementById('expenses'),
+        margin: document.getElementById('margin')
+      };
+
+      const errors = {
+        workers: document.getElementById('workers-error'),
+        hours: document.getElementById('hours-error'),
+        rate: document.getElementById('rate-error'),
+        expenses: document.getElementById('expenses-error'),
+        margin: document.getElementById('margin-error')
+      };
+
+      const displays = {
+        price: document.getElementById('display-price'),
+        labor: document.getElementById('display-labor'),
+        totalCost: document.getElementById('display-total-cost'),
+        profit: document.getElementById('display-profit')
+      };
+
+      // Currency Formatter
+      const currencyFormatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      // Clear all errors
+      function clearErrors() {
+        generalAlert.classList.remove('visible');
+        for (const key in inputs) {
+          inputs[key].classList.remove('input-error');
+          errors[key].textContent = '';
+          errors[key].classList.remove('visible');
+        }
+      }
+
+      // Display field error
+      function setFieldError(fieldKey, message) {
+        inputs[fieldKey].classList.add('input-error');
+        errors[fieldKey].textContent = message;
+        errors[fieldKey].classList.add('visible');
+      }
+
+      // Format safe currency
+      function safeCurrency(val) {
+        if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) {
+          return '$0.00';
+        }
+        return currencyFormatter.format(val);
+      }
+
+      // Reset displayed results to default $0.00
+      function resetDisplays() {
+        displays.price.textContent = '$0.00';
+        displays.labor.textContent = '$0.00';
+        displays.totalCost.textContent = '$0.00';
+        displays.profit.textContent = '$0.00';
+      }
+
+      // Validate inputs
+      function validate() {
+        clearErrors();
+        let isValid = true;
+        let firstInvalidField = null;
+
+        // 1. Number of Workers
+        const workersVal = inputs.workers.value.trim();
+        if (workersVal === '') {
+          setFieldError('workers', 'Please enter the number of workers.');
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = inputs.workers;
+        } else {
+          const numWorkers = Number(workersVal);
+          if (isNaN(numWorkers)) {
+            setFieldError('workers', 'Please enter a valid number for workers.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.workers;
+          } else if (numWorkers < 1) {
+            setFieldError('workers', 'Number of workers must be at least 1.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.workers;
+          } else if (!Number.isInteger(numWorkers)) {
+            setFieldError('workers', 'Number of workers must be a whole number.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.workers;
+          }
+        }
+
+        // 2. Hours per Worker
+        const hoursVal = inputs.hours.value.trim();
+        if (hoursVal === '') {
+          setFieldError('hours', 'Please enter the hours worked per person.');
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = inputs.hours;
+        } else {
+          const numHours = Number(hoursVal);
+          if (isNaN(numHours)) {
+            setFieldError('hours', 'Please enter a valid number of hours.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.hours;
+          } else if (numHours < 0) {
+            setFieldError('hours', 'Hours per worker cannot be negative.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.hours;
+          }
+        }
+
+        // 3. Hourly Labor Cost
+        const rateVal = inputs.rate.value.trim();
+        if (rateVal === '') {
+          setFieldError('rate', 'Please enter the hourly labor rate.');
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = inputs.rate;
+        } else {
+          const numRate = Number(rateVal);
+          if (isNaN(numRate)) {
+            setFieldError('rate', 'Please enter a valid hourly rate.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.rate;
+          } else if (numRate < 0) {
+            setFieldError('rate', 'Hourly labor cost cannot be negative.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.rate;
+          }
+        }
+
+        // 4. Other Expenses
+        const expensesVal = inputs.expenses.value.trim();
+        if (expensesVal === '') {
+          setFieldError('expenses', 'Please enter other expenses (enter 0 if none).');
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = inputs.expenses;
+        } else {
+          const numExpenses = Number(expensesVal);
+          if (isNaN(numExpenses)) {
+            setFieldError('expenses', 'Please enter a valid amount for other expenses.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.expenses;
+          } else if (numExpenses < 0) {
+            setFieldError('expenses', 'Other expenses cannot be negative.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.expenses;
+          }
+        }
+
+        // 5. Profit Margin %
+        const marginVal = inputs.margin.value.trim();
+        if (marginVal === '') {
+          setFieldError('margin', 'Please enter your desired profit margin percentage.');
+          isValid = false;
+          if (!firstInvalidField) firstInvalidField = inputs.margin;
+        } else {
+          const numMargin = Number(marginVal);
+          if (isNaN(numMargin)) {
+            setFieldError('margin', 'Please enter a valid percentage.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.margin;
+          } else if (numMargin < 0) {
+            setFieldError('margin', 'Profit margin cannot be negative.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.margin;
+          } else if (numMargin >= 100) {
+            setFieldError('margin', 'Profit margin must be less than 100% of the selling price.');
+            isValid = false;
+            if (!firstInvalidField) firstInvalidField = inputs.margin;
+          }
+        }
+
+        if (!isValid) {
+          generalAlertText.textContent = 'Please correct the highlighted fields above.';
+          generalAlert.classList.add('visible');
+          if (firstInvalidField) {
+            firstInvalidField.focus();
+          }
+        }
+
+        return isValid;
+      }
+
+      // Calculation logic
+      function calculate() {
+        if (!validate()) {
+          resetDisplays();
+          return;
+        }
+
+        const workers = parseFloat(inputs.workers.value);
+        const hours = parseFloat(inputs.hours.value);
+        const rate = parseFloat(inputs.rate.value);
+        const expenses = parseFloat(inputs.expenses.value);
+        const marginPercent = parseFloat(inputs.margin.value);
+
+        // 1. Total labor cost = workers * hours * hourly rate
+        const totalLaborCost = workers * hours * rate;
+
+        // 2. Total job cost = total labor cost + other expenses
+        const totalJobCost = totalLaborCost + expenses;
+
+        // 3. Recommended customer price: Margin as % of selling price
+        // Selling Price = Total Cost / (1 - (margin / 100))
+        const marginDecimal = marginPercent / 100;
+        let recommendedPrice = 0;
+        let estimatedProfit = 0;
+
+        if (1 - marginDecimal > 0) {
+          recommendedPrice = totalJobCost / (1 - marginDecimal);
+          estimatedProfit = recommendedPrice - totalJobCost;
+        }
+
+        // Extra safeguard against NaN or Infinity
+        if (!isFinite(recommendedPrice) || isNaN(recommendedPrice)) {
+          recommendedPrice = 0;
+        }
+        if (!isFinite(estimatedProfit) || isNaN(estimatedProfit)) {
+          estimatedProfit = 0;
+        }
+
+        // Render formatted values
+        displays.labor.textContent = safeCurrency(totalLaborCost);
+        displays.totalCost.textContent = safeCurrency(totalJobCost);
+        displays.price.textContent = safeCurrency(recommendedPrice);
+        displays.profit.textContent = safeCurrency(estimatedProfit);
+      }
+
+      // Handle form submit
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        calculate();
+      });
+
+      // Clear field errors as user types
+      Object.keys(inputs).forEach(function (key) {
+        inputs[key].addEventListener('input', function () {
+          if (inputs[key].classList.contains('input-error')) {
+            inputs[key].classList.remove('input-error');
+            errors[key].textContent = '';
+            errors[key].classList.remove('visible');
+
+            // Check if any error remains
+            const anyErrorsLeft = Object.values(inputs).some(function (input) {
+              return input.classList.contains('input-error');
+            });
+            if (!anyErrorsLeft) {
+              generalAlert.classList.remove('visible');
+            }
+          }
+        });
+      });
+
+      // Reset form
+      resetBtn.addEventListener('click', function () {
+        form.reset();
+        clearErrors();
+        resetDisplays();
+        inputs.workers.focus();
+      });
+
+    })();
+  </script>
+</body>
+</html>
