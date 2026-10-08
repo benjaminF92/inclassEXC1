@@ -328,6 +328,52 @@
       word-break: break-word;
     }
 
+    .btn-copy {
+      margin-top: 0.85rem;
+      background-color: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .btn-copy:hover {
+      background-color: rgba(255, 255, 255, 0.28);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .btn-copy:active {
+      transform: scale(0.98);
+    }
+
+    .btn-copy.copied {
+      background-color: #ffffff;
+      color: var(--success);
+      border-color: #ffffff;
+    }
+
+    .copy-feedback {
+      min-height: 1.25rem;
+      font-size: 0.775rem;
+      font-weight: 500;
+      margin-top: 0.35rem;
+      color: #bfdbfe;
+      transition: opacity 0.2s ease;
+    }
+
+    .copy-feedback.error {
+      color: #fecaca;
+    }
+
     .result-hero-note {
       font-size: 0.8rem;
       opacity: 0.85;
@@ -525,6 +571,16 @@
         <div class="result-hero">
           <div class="result-hero-label">Recommended Customer Price</div>
           <div class="result-hero-value" id="display-price">$0.00</div>
+          <div>
+            <button type="button" class="btn-copy" id="copy-btn" aria-label="Copy calculated customer price">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copy-btn-text">Copy Quote</span>
+            </button>
+          </div>
+          <div id="copy-feedback" class="copy-feedback" role="status" aria-live="polite"></div>
           <p class="result-hero-note">Note: This quote is an estimate and actual costs may vary.</p>
         </div>
 
@@ -585,6 +641,11 @@
         totalCost: document.getElementById('display-total-cost'),
         profit: document.getElementById('display-profit')
       };
+
+      const copyBtn = document.getElementById('copy-btn');
+      const copyBtnText = document.getElementById('copy-btn-text');
+      const copyFeedback = document.getElementById('copy-feedback');
+      let copyFeedbackTimer = null;
 
       // Currency Formatter
       const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -792,15 +853,97 @@
         displays.profit.textContent = safeCurrency(estimatedProfit);
       }
 
+      // Reset copy button state
+      function resetCopyButtonState() {
+        copyBtn.classList.remove('copied');
+        copyBtnText.textContent = 'Copy Quote';
+      }
+
+      // Display feedback message for copy action
+      function setCopyFeedback(message, isError) {
+        if (copyFeedbackTimer) {
+          clearTimeout(copyFeedbackTimer);
+        }
+        copyFeedback.textContent = message;
+        if (isError) {
+          copyFeedback.classList.add('error');
+        } else {
+          copyFeedback.classList.remove('error');
+        }
+        copyFeedbackTimer = setTimeout(function () {
+          copyFeedback.textContent = '';
+          copyFeedback.classList.remove('error');
+          resetCopyButtonState();
+        }, 2500);
+      }
+
+      // Clipboard helper supporting both Async Clipboard API and execCommand fallback
+      function copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function (resolve, reject) {
+          try {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const success = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            if (success) {
+              resolve();
+            } else {
+              reject(new Error('Copy command failed'));
+            }
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+
+      // Handle copy quote click
+      function handleCopy() {
+        // If inputs are invalid, the button should not copy a price
+        if (!validate()) {
+          setCopyFeedback('Cannot copy: please enter valid job details.', true);
+          return;
+        }
+
+        calculate();
+
+        const priceText = displays.price.textContent;
+        copyTextToClipboard(priceText).then(function () {
+          copyBtn.classList.add('copied');
+          copyBtnText.textContent = 'Copied!';
+          setCopyFeedback(priceText + ' copied to clipboard!', false);
+        }).catch(function () {
+          setCopyFeedback('Failed to copy to clipboard.', true);
+        });
+      }
+
       // Handle form submit
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         calculate();
       });
 
+      // Handle copy button
+      copyBtn.addEventListener('click', handleCopy);
+
       // Clear field errors as user types
       Object.keys(inputs).forEach(function (key) {
         inputs[key].addEventListener('input', function () {
+          if (copyFeedback.textContent) {
+            if (copyFeedbackTimer) clearTimeout(copyFeedbackTimer);
+            copyFeedback.textContent = '';
+            copyFeedback.classList.remove('error');
+            resetCopyButtonState();
+          }
+
           if (inputs[key].classList.contains('input-error')) {
             inputs[key].classList.remove('input-error');
             errors[key].textContent = '';
@@ -822,6 +965,10 @@
         form.reset();
         clearErrors();
         resetDisplays();
+        resetCopyButtonState();
+        if (copyFeedbackTimer) clearTimeout(copyFeedbackTimer);
+        copyFeedback.textContent = '';
+        copyFeedback.classList.remove('error');
         inputs.workers.focus();
       });
 
